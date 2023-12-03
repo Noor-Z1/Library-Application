@@ -271,7 +271,7 @@ def main():
     print(library.books)
     print(library.users)
     print(library.operations)
-    print(library.getMaxRentedBook())
+    print(library.getMaxRentedBook())    # function not completed yet
     print(library.librarianWithMaxOperations())
 
 if __name__ == "__main__":
