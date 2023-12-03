@@ -379,6 +379,7 @@ class ClientThread(Thread):
 
 
 
+            # to be completed by Shemin
             elif clientMsg[0:6] == "report":
                 statistics = Statistics(self.library)
                 statistics.generateStatistics()
