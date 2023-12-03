@@ -137,6 +137,11 @@ class Library:
         else:
             return None
 
+    def getBookAuthor(self, bookID):
+        if bookID in self.books:
+            return self.books[bookID]['authorName']
+        else:
+            return None
 
     def librarianOperationsCounter(self):
         librarianOps = {}
@@ -164,10 +169,62 @@ class Library:
 
         return maxLibrarian
 
+    def clientRentReturnCounter(self):
+        clientOps = {}
+
+        for operation in self.operations:
+            if self.operations[operation]['clientName'] in clientOps:
+                name = self.operations[operation]['clientName']
+                if self.operations[operation]['opType'] == 'rent':
+                    clientOps[name]['rentCount'] += len(self.operations[operation]['items'])
+                elif self.operations[operation]['opType'] == 'return':
+                    clientOps[name]['returnCount'] += len(self.operations[operation]['items'])
+            else:
+                if self.operations[operation]['opType'] == 'rent':
+                    clientOps[self.operations[operation]['clientName']] = {'rentCount': len(self.operations[operation]['items']), 'returnCount': 0}
+                elif self.operations[operation]['opType'] == 'return':
+                    clientOps[self.operations[operation]['clientName']]['returnCount'] += len(self.operations[operation]['items'])
+        return clientOps
+
+
+    def rentReturnValidation(self, clientName):
+        # has the client returned previously rented books?
+        clientOps = self.clientRentReturnCounter()
+        for clients in clientOps:
+            if clientOps['clientName'] == clientName:
+                if clientOps['returnCount'] == clients['rentCount']:
+                    return True
+                else:
+                    return False
+
+    def booksRented(self, clientName):
+        books = []
+        for operation in self.operations:
+            if self.operations[operation]['clientName'] == clientName and self.operations[operation]['opType'] == 'rent':
+                books.append(self.operations[operation]['items'])
+        return books
+
+    def booksReturned(self, clientName):
+        books = []
+        for operation in self.operations:
+            if self.operations[operation]['clientName'] == clientName and self.operations[operation]['opType'] == 'return':
+                books.append(self.operations[operation]['items'])
+        return books
+
+    def getBookstoBeReturned(self, clientName):
+        rentedBooks = self.booksRented(clientName)
+        returnedBooks = self.booksReturned(clientName)
+        toBeReturned = []
+
+        for book in rentedBooks:
+            if book not in returnedBooks:
+                toBeReturned.append(self.getBookTitle(book))
+
+        return toBeReturned
+
 
 
     # for Shemin to complete :)
-
     def getTotalRevenue(self):
         pass
 
@@ -226,7 +283,8 @@ class ClientThread(Thread):
                 _, username, password = clientMsg.split(";")
                 role = self.library.checkUserRole(username)
                 if self.library.checkUserPassword(username, password):
-                    self.cSocket.send("loginsucess;" + username + role.encode())
+                    msg = "login success"+";"+username+";"+role
+                    self.cSocket.send(msg.encode())
                 else:
                     self.cSocket.send("loginfailure".encode())
 
@@ -243,10 +301,32 @@ class ClientThread(Thread):
                 items = clientMsg.split(";")[4:]
 
                 # check availability
+                available = True
+                available2 = True
+
                 for item in items.split(","):
                     if item in self.library.books:
                         if self.library.books[item]['copiesAvailable'] == 0:
-                            self.cSocket.send("booknotavailable".encode())
+                            message = "availabilityerror"
+                            message += ";" + self.library.getBookTitle(item) + ";" + self.library.getBookAuthor(item)
+                            self.cSocket.send(message.encode())
+                            available = False
+                            break
+
+                # check if user has returned all the books that s/he has rented previously
+
+                if(self.library.rentReturnValidation(clientName)):
+                    available2 = True
+                else:
+                    available2 = False
+                    message = "renterror"
+                    for books in self.library.getBookstoBeReturned(clientName):
+                        message += ";" + books
+                    self.cSocket.send(message.encode())
+
+
+                if available and available2:
+                    self.library.addOperations([librarianName, clientName, date, items])
 
 
             elif clientMsg[0:5] == "return":
@@ -257,6 +337,10 @@ class ClientThread(Thread):
                 # since it has not been rented at all by the client. In this case the error message (returnerror)
                 # should be sent to the client side and the appropriate error message should be displayed in the
                 # message box
+
+
+            elif clientMsg == "exit":
+                self.cSocket.close()
 
 
 
@@ -271,8 +355,10 @@ def main():
     print(library.books)
     print(library.users)
     print(library.operations)
-    print(library.getMaxRentedBook())    # function not completed yet
+    # print(library.getMaxRentedBook())    # function not completed yet
     print(library.librarianWithMaxOperations())
+    print(library.clientRentReturnCounter())
+
 
 if __name__ == "__main__":
     main()
