@@ -1,13 +1,12 @@
 import socket
 from threading import *
 
+
 '''
 This is the dataProcessor class, which will be used to 
 read and write data from the specific files 
 of our Library Management System.
 '''
-
-
 class dataProcessor:
     def __init__(self, filepath):
         self.filepath = filepath
@@ -38,25 +37,23 @@ class dataProcessor:
 
             elif self.filepath == "operations.txt":
                 operations = {}
+                count = 1
+
                 for line in data.split('\n'):
                     if line != '':
                         operation = line.split(';')
                         if operation[0] == 'rent':
-                            operations[operation[0]] = {'librarianName': operation[1], 'clientName': operation[2],
-                                                        'date': operation[3],
-                                                        'items': []}
+                            operations[count] = {'opType': operation[0], 'librarianName': operation[1], 'clientName': operation[2], 'date': operation[3], 'items': []}
                             # since items could be multiple
                             # we need to store them in a list
                             for val in operation[4:]:
-                                operations[operation[0]]['items'].append(int(val))
+                                operations[count]['items'].append(int(val))
 
                         elif operation[0] == 'return':
-                            operations[operation[0]] = {'librarianName': operation[1], 'clientName': operation[2],
-                                                        'date': operation[3],
-                                                        'cost': float(operation[4]),
-                                                        'items': []}
+                            operations[count] = {'opType': operation[0], 'librarianName': operation[1], 'clientName': operation[2], 'date': operation[3], 'cost': operation[4],'items': []}
                             for val in operation[5:]:
-                                operations[operation[0]]['items'].append(int(val))
+                                operations[count]['items'].append(int(val))
+                        count += 1
 
                 file.close()
                 return operations
@@ -140,40 +137,16 @@ class Library:
         else:
             return None
 
-    def rentedBooksWithCount(self):
-        rented = {}
-        for operation in self.operations:
-            if operation['operationType'] == 'rent':
-                items = operation['itemID']
-                for item in items:
-                    if item in rented:
-                        rented[self.getBookTitle(item)] += 1
-                    else:
-                        rented[self.getBookTitle(item)] = 1
-
-        return rented
-
-    def getMaxRentedBook(self):
-        allRented = self.rentedBooksWithCount()
-        maxRented = 0
-        maxBook = []
-
-        for book in allRented:
-            if allRented[book] > maxRented:
-                maxRented = allRented[book]
-                maxBook = [book]
-            elif allRented[book] == maxRented:
-                maxBook.append(book)
-
-        return maxBook
 
     def librarianOperationsCounter(self):
         librarianOps = {}
+
         for operation in self.operations:
-            if operation['librarianName'] in librarianOps:
-                librarianOps[operation['librarianName']] += 1
+
+            if self.operations[operation]['librarianName'] in librarianOps:
+                librarianOps[self.operations[operation]['librarianName']] += 1
             else:
-                librarianOps[operation['librarianName']] = 1
+                librarianOps[self.operations[operation]['librarianName']] = 1
 
         return librarianOps
 
@@ -193,16 +166,31 @@ class Library:
 
 
 
-    def getTotalRevenue(self):
-        revenue = 0
-        for operation in self.operations:
-            if operation['operationType'] == 'return':
-                revenue += operation['cost']
+    # for Shemin to complete :)
 
-        return revenue
+    def getTotalRevenue(self):
+        pass
 
     def calculateAvgRentalPeriod(self):
         pass
+
+    def rentedBooksWithCount(self):
+        rented = {}
+        pass
+
+    def getMaxRentedBook(self):
+        allRented = self.rentedBooksWithCount()
+        maxRented = 0
+        maxBook = []
+
+        for book in allRented:
+            if allRented[book] > maxRented:
+                maxRented = allRented[book]
+                maxBook = [book]
+            elif allRented[book] == maxRented:
+                maxBook.append(book)
+        return maxBook
+
 
 
 class Statistics:
@@ -218,6 +206,7 @@ class Statistics:
         self.report2 = self.library.librarianWithMaxOperations()
         self.report3 = self.library.getTotalRevenue()
         self.report4 = self.library.averageRentalPeriod()
+
 
 
 class ClientThread(Thread):
@@ -270,8 +259,9 @@ class ClientThread(Thread):
                 # message box
 
 
-def main():
 
+
+def main():
     # testing library
     library = Library()
     library.addUsers()
@@ -281,7 +271,8 @@ def main():
     print(library.books)
     print(library.users)
     print(library.operations)
-
+    print(library.getMaxRentedBook())
+    print(library.librarianWithMaxOperations())
 
 if __name__ == "__main__":
     main()
