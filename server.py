@@ -65,10 +65,8 @@ class dataProcessor:
 
     def write(self, data):
         with open(self.filepath, 'a') as file:
-            # write data separated by ;
-            for item in data:
-                file.write(str(item) + ';')
-
+           # the data we have is a string so we need to just write it directly
+           file.write(data + '\n')
         file.close()
 
 
@@ -133,10 +131,7 @@ class Library:
             return None
 
     def getBookTitle(self, bookID):
-        if bookID in self.books:
-            return self.books[bookID]['title']
-        else:
-            return None
+        return self.books[bookID]['title']
 
     def getBookAuthor(self, bookID):
         if bookID in self.books:
@@ -203,14 +198,17 @@ class Library:
         for operation in self.operations:
             if self.operations[operation]['clientName'] == clientName and self.operations[operation]['opType'] == 'rent':
                 books.append(self.operations[operation]['items'])
-        return books
+        return books[0]
 
     def booksReturned(self, clientName):
         books = []
         for operation in self.operations:
             if self.operations[operation]['clientName'] == clientName and self.operations[operation]['opType'] == 'return':
                 books.append(self.operations[operation]['items'])
-        return books
+        if len(books) == 0:
+            return []
+        else:
+            return books[0]
 
     def getBookstoBeReturned(self, clientName):
         rentedBooks = self.booksRented(clientName)
@@ -220,9 +218,10 @@ class Library:
         for book in rentedBooks:
             if book not in returnedBooks:
                 toBeReturned.append(self.getBookTitle(book))
-
         return toBeReturned
 
+    def costCalculation(self, clientName):
+        pass
 
 
     # for Shemin to complete :)
@@ -281,6 +280,7 @@ class ClientThread(Thread):
             self.cSocket.send(serverMsg)
             clientMsg = self.cSocket.recv(1024).decode()
 
+
             if clientMsg[0:5] == "login":
                 _, username, password = clientMsg.split(";")
                 role = self.library.checkUserRole(username)
@@ -304,9 +304,8 @@ class ClientThread(Thread):
 
                 # check availability
                 available = True
-                available2 = True
 
-                for item in items.split(","):
+                for item in items:
                     if item in self.library.books:
                         message = "availabilityerror"
                         if self.library.books[item]['copiesAvailable'] == 0:
@@ -326,17 +325,38 @@ class ClientThread(Thread):
                             message += ";" + books
                         self.cSocket.send(message.encode())
                     if available2:
-                        self.library.addOperations([librarianName, clientName, date, items])
+                        self.cSocket.send("rentsuccess".encode())
+                        self.library.addOperations(clientMsg)
 
 
             elif clientMsg[0:5] == "return":
-                _, librarianName, clientName, date, cost = clientMsg.split(";")[0:5]
-                items = clientMsg.split(";")[5:]
+                _, librarianName, clientName, date = clientMsg.split(";")[0:4]
+                items = clientMsg.split(";")[4:]
 
                 # need to check if the book has been already returned or if there is no need to return the book,
                 # since it has not been rented at all by the client. In this case the error message (returnerror)
                 # should be sent to the client side and the appropriate error message should be displayed in the
                 # message box
+
+
+                returned_books = self.library.booksReturned(clientName)
+                rented_books = self.library.booksRented(clientName)
+                error = False
+
+
+                for book in items:
+                    if book not in rented_books:
+                        error = True
+                        self.cSocket.send("returnerror".encode())
+                    elif book in returned_books:
+                        error = True
+                        self.cSocket.send("returnerror".encode())
+
+                if not error:
+                    cost = 0  # calculate cost
+                    msg  = "returnsuccess" + ";" + cost
+                    self.cSocket.send(msg.encode())
+                    # need to alter the client message to include the cost before storing in operations.txt
 
 
             elif clientMsg[0:6] == "report":
@@ -374,6 +394,15 @@ def main():
     # print(library.getMaxRentedBook())    # function not completed yet
     print(library.librarianWithMaxOperations())
     print(library.clientRentReturnCounter())
+
+    # more testing
+    print(library.booksRented("john"))
+    print(library.booksReturned("john"))
+    print(library.getBookstoBeReturned("john"))
+
+    print(library.booksRented("ali"))
+    print(library.booksReturned("ali"))
+    print(library.getBookstoBeReturned("ali"))
 
 
 if __name__ == "__main__":
