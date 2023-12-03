@@ -271,13 +271,16 @@ class ClientThread(Thread):
 
 
 def main():
+
     # testing library
     library = Library()
     library.addUsers()
     library.addBooks()
+    library.checkOperations()
 
     print(library.books)
     print(library.users)
+    print(library.operations)
 
 
 if __name__ == "__main__":
