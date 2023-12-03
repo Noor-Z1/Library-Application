@@ -1,5 +1,7 @@
 import socket
+from datetime import *
 from threading import *
+
 
 
 '''
@@ -220,8 +222,24 @@ class Library:
                 toBeReturned.append(self.getBookTitle(book))
         return toBeReturned
 
-    def costCalculation(self, clientName):
-        pass
+
+    def rentedDaysCount(self, clientName, book, returnDate):
+        # need to convert the dates to datetime format to calculate days
+
+        date_format = '%d.%m.%Y'
+        returnDate = datetime.strptime(returnDate, date_format)
+
+        for operation in self.operations:
+            if self.operations[operation]['clientName'] == clientName and self.operations[operation]['opType'] == 'rent' and book in self.operations[operation]['items']:
+                issueDate = datetime.strptime(self.operations[operation]['date'], date_format)
+                return (returnDate - issueDate).days
+
+
+    def costCalculation(self, clientName, returnedBooks, returnDate):
+        cost = 0
+        for book in returnedBooks:
+            cost += self.getBookPrice(book) * self.rentedDaysCount(clientName, book, returnDate)
+        return cost
 
 
     # for Shemin to complete :)
@@ -338,7 +356,6 @@ class ClientThread(Thread):
                 # should be sent to the client side and the appropriate error message should be displayed in the
                 # message box
 
-
                 returned_books = self.library.booksReturned(clientName)
                 rented_books = self.library.booksRented(clientName)
                 error = False
@@ -353,10 +370,13 @@ class ClientThread(Thread):
                         self.cSocket.send("returnerror".encode())
 
                 if not error:
-                    cost = 0  # calculate cost
+                    cost = self.library.costCalculation(clientName, items, date)
                     msg  = "returnsuccess" + ";" + cost
-                    self.cSocket.send(msg.encode())
                     # need to alter the client message to include the cost before storing in operations.txt
+                    data_to_write = clientMsg[0:4] + ";" + cost + clientMsg[4:]
+                    self.library.addOperations(data_to_write)
+                    self.cSocket.send(msg.encode())
+
 
 
             elif clientMsg[0:6] == "report":
@@ -375,8 +395,7 @@ class ClientThread(Thread):
                     pass
 
 
-            elif clientMsg == "exit":
-                self.cSocket.close()
+
 
 
 
@@ -403,6 +422,9 @@ def main():
     print(library.booksRented("ali"))
     print(library.booksReturned("ali"))
     print(library.getBookstoBeReturned("ali"))
+
+    # COST CALCULATION TEST
+    print(library.costCalculation("ali", [4], "15.11.2023"))
 
 
 if __name__ == "__main__":
