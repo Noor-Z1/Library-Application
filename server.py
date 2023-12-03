@@ -76,6 +76,7 @@ class dataProcessor:
 This is the Library class, which will be used to
 to manage the data of the Library Management System
 and to perform operations on it
+
 '''
 class Library:
     def __init__(self):
@@ -306,27 +307,25 @@ class ClientThread(Thread):
 
                 for item in items.split(","):
                     if item in self.library.books:
+                        message = "availabilityerror"
                         if self.library.books[item]['copiesAvailable'] == 0:
-                            message = "availabilityerror"
                             message += ";" + self.library.getBookTitle(item) + ";" + self.library.getBookAuthor(item)
-                            self.cSocket.send(message.encode())
                             available = False
-                            break
 
-                # check if user has returned all the books that s/he has rented previously
-
-                if(self.library.rentReturnValidation(clientName)):
-                    available2 = True
-                else:
-                    available2 = False
-                    message = "renterror"
-                    for books in self.library.getBookstoBeReturned(clientName):
-                        message += ";" + books
+                if not available:
                     self.cSocket.send(message.encode())
-
-
-                if available and available2:
-                    self.library.addOperations([librarianName, clientName, date, items])
+                else:
+                    # check if user has returned all the books that s/he has rented previously
+                    if(self.library.rentReturnValidation(clientName)):
+                        available2 = True
+                    else:
+                        available2 = False
+                        message = "renterror"
+                        for books in self.library.getBookstoBeReturned(clientName):
+                            message += ";" + books
+                        self.cSocket.send(message.encode())
+                    if available2:
+                        self.library.addOperations([librarianName, clientName, date, items])
 
 
             elif clientMsg[0:5] == "return":
