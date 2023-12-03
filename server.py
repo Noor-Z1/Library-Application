@@ -273,6 +273,7 @@ class ClientThread(Thread):
         self.csocket = clientsocket
         self.address = clientAddress
         self.library = library
+
         print("New connection added: ", clientAddress)
 
         def run(self):
@@ -336,6 +337,22 @@ class ClientThread(Thread):
                 # since it has not been rented at all by the client. In this case the error message (returnerror)
                 # should be sent to the client side and the appropriate error message should be displayed in the
                 # message box
+
+
+            elif clientMsg[0:6] == "report":
+                statistics = Statistics(self.library)
+                statistics.generateStatistics()
+                # to be completed
+                if clientMsg[0:7] == "report1":
+                    pass
+                elif clientMsg[0:7] == "report2":
+                    pass
+                elif clientMsg[0:7] == "report3":
+                    pass
+                elif clientMsg[0:7] == "report4":
+                    pass
+                else:
+                    pass
 
 
             elif clientMsg == "exit":
