@@ -10,7 +10,7 @@ class LoginScreen(Frame):
         self.master = master
         self.lock = RLock()
         # self.serverMsg = self.cSocket.recv(1024).decode()
-        self.grid()
+
 
         self.usernameLabel = Label(self,text='User Name ').grid(row=0,column=0)
         self.username = StringVar()
@@ -41,7 +41,6 @@ class LibrarianScreen(Frame):
         Frame.__init__(self)
         self.cSocket = cSocket
         self.master = master
-        # self.master.title("Librarian Panel")
 
         self.master.rowconfigure(1, weight=1)
         self.master.columnconfigure(0, weight=1)
@@ -51,7 +50,6 @@ class LibrarianScreen(Frame):
         for i in range(0,5):
             self.columnconfigure(i, weight=1)
 
-        self.grid(sticky=W + E + N + S)
 
         self.bookLabel = Label(self, text="Books", justify=CENTER, font='Bold')
         self.bookLabel.grid(columnspan=4,sticky=W+E+N+S)
@@ -100,7 +98,40 @@ class LibrarianScreen(Frame):
     def closeOperation(self):
         pass
 class ManagerScreen(Frame):
-    pass
+    def __init__(self,cSocket,master):
+        Frame.__init__(self)
+        self.cSocket = cSocket
+        self.master = master
+
+        self.master.rowconfigure(1, weight=1)
+        self.master.columnconfigure(0, weight=1)
+
+        self.reportLabel = Label(self, text="REPORTS", justify=CENTER, font='Bold')
+        self.reportLabel.grid(columnspan=4, sticky=W + E + N + S)
+
+        self.reports = [
+            ("(1) What is the most rented book overall?",IntVar()),
+            ("(2) Which librarian has the highest number of operations?",IntVar()),
+            ("(3) What is the total generated revenue by the library?",IntVar()),
+            ("(4) What is the average rental period for the 'Harry Potter' book?",IntVar())
+        ]
+        rowindex = 1
+        for r in self.reports:
+            self.report = Radiobutton(self, text=r[0], variable=r[1], height=2)
+            self.report.grid(row=rowindex, column=0, columnspan=4, sticky=W)
+            rowindex += 1
+
+        self.createButton = Button(self, text='Create', command=self.createReportOperation,width=30)
+        self.createButton.grid(row=rowindex + 1, column=0, columnspan=2,sticky=W)
+        self.createButton.columnconfigure(0,weight=4)
+        self.createButton.rowconfigure(rowindex + 1, weight=4)
+
+        self.closeButton = Button(self, text='Close', command=self.closeOperation,width=15)
+        self.closeButton.grid(row=rowindex + 1, column=2, columnspan=1, sticky=E)
+    def createReportOperation(self):
+        pass
+    def closeOperation(self):
+        pass
 class App(Tk):
     def __init__(self, cSocket):
         Tk.__init__(self)
@@ -109,7 +140,7 @@ class App(Tk):
 
         self.loginScreen = LoginScreen(self.cSocket,self)
         self.librarianScreen = LibrarianScreen(self.cSocket,self)
-        # self.managerScreen = ManagerScreen(self.cSocket)
+        self.managerScreen = ManagerScreen(self.cSocket,self)
 
         #initially show login
         self.showScreen('login')
@@ -121,12 +152,13 @@ class App(Tk):
 
         if screen == 'login':
             self.title('Login')
-            self.loginScreen.grid()
+            self.loginScreen.grid(padx=5,pady=5)
         elif screen == 'librarian':
             self.title('Librarian Panel')
-            self.librarianScreen.grid()
+            self.librarianScreen.grid(padx=5,pady=5)
         elif screen == 'manager':
-            self.managerScreen.grid()
+            self.title('Manager Panel')
+            self.managerScreen.grid(padx=30, pady=10)
 if __name__ == "__main__":
     # HOST = "127.0.0.1"
     # PORT = 5000
