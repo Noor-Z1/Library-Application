@@ -62,7 +62,6 @@ class dataProcessor:
     This method is used to write data to the
     operations.txt file
     '''
-
     def write(self, data):
         with open(self.filepath, 'a') as file:
            # the data we have is a string so we need to just write it directly
@@ -139,33 +138,6 @@ class Library:
         else:
             return None
 
-    def librarianOperationsCounter(self):
-        librarianOps = {}
-
-        for operation in self.operations:
-
-            if self.operations[operation]['librarianName'] in librarianOps:
-                librarianOps[self.operations[operation]['librarianName']] += 1
-            else:
-                librarianOps[self.operations[operation]['librarianName']] = 1
-
-        return librarianOps
-
-    # report 2
-    def librarianWithMaxOperations(self):
-        allLibrarians = self.librarianOperationsCounter()
-        maxOperations = 0
-        maxLibrarian = []
-
-        for librarian in allLibrarians:
-            if allLibrarians[librarian] > maxOperations:
-                maxOperations = allLibrarians[librarian]
-                maxLibrarian = [librarian]
-            elif allLibrarians[librarian] == maxOperations:
-                maxLibrarian.append(librarian)
-
-        return maxLibrarian
-
     def clientRentReturnCounter(self):
         clientOps = {}
 
@@ -224,7 +196,6 @@ class Library:
 
     def rentedDaysCount(self, clientName, book, returnDate):
         # need to convert the dates to datetime format to calculate days
-
         date_format = '%d.%m.%Y'
         returnDate = datetime.strptime(returnDate, date_format)
 
@@ -265,8 +236,32 @@ class Library:
                 maxBook.append((f"book ID: {book}",f"Maximum rent: {maxRented}"))
         return maxBook
 
+    def librarianOperationsCounter(self):
+        librarianOps = {}
 
+        for operation in self.operations:
 
+            if self.operations[operation]['librarianName'] in librarianOps:
+                librarianOps[self.operations[operation]['librarianName']] += 1
+            else:
+                librarianOps[self.operations[operation]['librarianName']] = 1
+
+        return librarianOps
+
+    # report 2
+    def librarianWithMaxOperations(self):
+        allLibrarians = self.librarianOperationsCounter()
+        maxOperations = 0
+        maxLibrarian = []
+
+        for librarian in allLibrarians:
+            if allLibrarians[librarian] > maxOperations:
+                maxOperations = allLibrarians[librarian]
+                maxLibrarian = [librarian]
+            elif allLibrarians[librarian] == maxOperations:
+                maxLibrarian.append(librarian)
+
+        return maxLibrarian
 
     #report 3 completed
     def TotalRevenue(self):
@@ -275,6 +270,7 @@ class Library:
             if self.operations[operation]['opType'] == 'return':
                 cost += self.operations[operation]['cost']
         return cost
+    
     # report 4 "Completed"
     def avgRentalHelper(self,bookID):
         rentReturn = {}
@@ -284,6 +280,7 @@ class Library:
             elif self.operations[operation]['clientName'] in rentReturn.keys() and self.operations[operation]['opType'] == 'return':
                 rentReturn[self.operations[operation]['clientName']][1] = self.operations[operation]['date']
         return rentReturn
+    
     def averageRentalPeriod(self,bookID):
         rentReturn = self.avgRentalHelper(bookID)
         date_format = '%d.%m.%Y'
@@ -295,7 +292,10 @@ class Library:
         return sum/len(rentReturn.keys())
 
 
-
+'''
+This class is used to generate statistics
+from the library class 
+'''
 class Statistics:
     def __init__(self, library):
         self.report1 = None

@@ -11,18 +11,17 @@ class LoginScreen(Frame):
         self.lock = RLock()
         # self.serverMsg = self.cSocket.recv(1024).decode()
 
+        self.master.rowconfigure(0, weight=1)
+        self.master.columnconfigure(0, weight=1)
 
-        self.usernameLabel = Label(self,text='User Name ').grid(row=0,column=0)
+        self.usernameLabel = Label(self,text='User name ').grid(row=0,column=0)
         self.username = StringVar()
+
         self.usernameEntry = Entry(self,textvariable=self.username).grid(row=0,column=1)
-
-
-
         self.passLabel = Label(self,text='Password ').grid(row=1,column=0)
         self.password = StringVar()
+
         self.passEntry = Entry(self,textvariable=self.password,show='*').grid(row=1,column=1)
-
-
         self.loginButton = Button(self,text='Login',justify=CENTER,command=self.approvalMsg).grid(row=2,column=1)
 
     def approvalMsg(self):
@@ -97,6 +96,7 @@ class LibrarianScreen(Frame):
         pass
     def closeOperation(self):
         pass
+
 class ManagerScreen(Frame):
     def __init__(self,cSocket,master):
         Frame.__init__(self)
@@ -128,10 +128,12 @@ class ManagerScreen(Frame):
 
         self.closeButton = Button(self, text='Close', command=self.closeOperation,width=15)
         self.closeButton.grid(row=rowindex + 1, column=2, columnspan=1, sticky=E)
+    
     def createReportOperation(self):
         pass
     def closeOperation(self):
         pass
+
 class App(Tk):
     def __init__(self, cSocket):
         Tk.__init__(self)
@@ -159,6 +161,7 @@ class App(Tk):
         elif screen == 'manager':
             self.title('Manager Panel')
             self.managerScreen.grid(padx=30, pady=10)
+
 if __name__ == "__main__":
     # HOST = "127.0.0.1"
     # PORT = 5000
