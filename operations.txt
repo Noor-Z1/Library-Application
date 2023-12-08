@@ -2,3 +2,4 @@ rent;greg;john;05.11.2023;3;5
 return;greg;john;12.11.2023;10.5;5
 return;dave;john;16.11.2023;22;3
 rent;greg;ali;12.11.2023;4
+rent;greg;john;20.11.2023;3
