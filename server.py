@@ -102,7 +102,7 @@ class ClientThread(Thread):
     # to be completed by Shemin
     def report(self,clientMsg):
         # clientMsg = self.cSocket.recv(1024).decode()
-        if "report" in clientMsg:
+        if clientMsg[0:5] == 'report':
             serverMsg = ''
             if "report1" in clientMsg:
                 serverMsg = f'The most rented book(s) overall is/are:\n {self.library.MaxRentedBook()}'
