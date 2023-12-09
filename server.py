@@ -16,18 +16,21 @@ class ClientThread(Thread):
         print("New connection added: ", clientAddress)
 
     def run(self):
-
-        clientMsg = self.cSocket.recv(1024).decode()
-
-        self.login(clientMsg)
-        self.rent(clientMsg)
-        self.returnBook(clientMsg)
-
-        # to be completed by Shemin!!
-        self.report(clientMsg)
-
+        try:
+            clientMsg = self.cSocket.recv(1024).decode()
+            if 'login' in clientMsg:
+                self.login(clientMsg)
+            if 'rent' in clientMsg:
+                self.rent(clientMsg)
+            if 'return' in clientMsg:
+                self.returnBook(clientMsg)
+            if 'report' in clientMsg:
+                self.report(clientMsg)
+        except Exception as e:
+            print(e)
+        finally:
+            self.cSocket.close()
     def login(self, clientMsg):
-
         if "login" in clientMsg:
             _, username, password = clientMsg.split(";")
             role = self.library.checkUserRole(username)
@@ -38,15 +41,15 @@ class ClientThread(Thread):
                 print("loginfailure")
                 self.cSocket.send("loginfailure".encode())
 
-    def rent(self, clientMsg):
-
-        if clientMsg[0:4] == "rent":
+    def rent(self,clientMsg):
+        # clientMsg = self.cSocket.recv(1024).decode()
+        if "rent" in clientMsg:
             _, librarianName, clientName, date = clientMsg.split(";")[0:4]
             items = clientMsg.split(";")[4:]
 
             # check availability
             available = True
-
+            message = ''
             for item in items:
                 if item in self.library.books:
                     message = "availabilityerror"
@@ -58,7 +61,7 @@ class ClientThread(Thread):
                 self.cSocket.send(message.encode())
             else:
                 # check if user has returned all the books that s/he has rented previously
-                if (self.library.rentReturnValidation(clientName)):
+                if self.library.rentReturnValidation(clientName):
                     available2 = True
                 else:
                     available2 = False
@@ -71,6 +74,7 @@ class ClientThread(Thread):
                     self.library.addOperations(clientMsg)
 
     def returnBook(self, clientMsg):
+        # clientMsg = self.cSocket.recv(1024).decode()
         if clientMsg[0:5] == "return":
             _, librarianName, clientName, date = clientMsg.split(";")[0:4]
             items = clientMsg.split(";")[4:]
@@ -96,22 +100,22 @@ class ClientThread(Thread):
                 self.cSocket.send(msg.encode())
 
     # to be completed by Shemin
-    def report(self, clientMsg):
-        if clientMsg[0:6] == "report":
-            statistics = Statistics(self.library)
-            statistics.generateStatistics()
-
-            if clientMsg[0:7] == "report1":
-                pass
-            elif clientMsg[0:7] == "report2":
-                pass
-            elif clientMsg[0:7] == "report3":
-                pass
-            elif clientMsg[0:7] == "report4":
-                pass
-            else:
-                pass
-
+    def report(self,clientMsg):
+        # clientMsg = self.cSocket.recv(1024).decode()
+        if "report" in clientMsg:
+            serverMsg = ''
+            if "report1" in clientMsg:
+                serverMsg = f'The most rented book(s) overall is/are:\n {self.library.MaxRentedBook()}'
+                self.cSocket.send(serverMsg.encode())
+            elif "report2" in clientMsg:
+                serverMsg = self.library.librarianWithMaxOperations()
+                self.cSocket.send(serverMsg.encode())
+            elif "report3" in clientMsg:
+                serverMsg = self.library.TotalRevenue()
+                self.cSocket.send(serverMsg.encode())
+            elif "report4" in clientMsg:
+                serverMsg = self.library.averageRentalPeriod()
+                self.cSocket.send(serverMsg.encode())
 
 def main():
     # testing library
@@ -133,8 +137,7 @@ def main():
         cSocket, cAddress = mySocket.accept()
         newClient = ClientThread(cAddress, cSocket, library)
         newClient.start()
-        newClient.join()
-
+        # newClient.join()
 
 if __name__ == "__main__":
     main()
