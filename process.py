@@ -175,16 +175,16 @@ class Library:
     def booksRented(self, clientName):
         books = []
         for operation in self.operations:
-            if self.operations[operation]['clientName'] == clientName and self.operations[operation][
-                'opType'] == 'rent':
+            if (self.operations[operation]['clientName'] == clientName
+                    and self.operations[operation]['opType'] == 'rent'):
                 books.append(self.operations[operation]['items'])
         return books[0]
 
     def booksReturned(self, clientName):
         books = []
         for operation in self.operations:
-            if self.operations[operation]['clientName'] == clientName and self.operations[operation][
-                'opType'] == 'return':
+            if (self.operations[operation]['clientName'] == clientName
+                    and self.operations[operation]['opType'] == 'return'):
                 books.append(self.operations[operation]['items'])
         if len(books) == 0:
             return []
@@ -207,8 +207,9 @@ class Library:
         returnDate = datetime.strptime(returnDate, date_format)
 
         for operation in self.operations:
-            if self.operations[operation]['clientName'] == clientName and self.operations[operation][
-                'opType'] == 'rent' and book in self.operations[operation]['items']:
+            if (self.operations[operation]['clientName'] == clientName
+                    and self.operations[operation]['opType'] == 'rent'
+                    and book in self.operations[operation]['items']):
                 issueDate = datetime.strptime(self.operations[operation]['date'], date_format)
                 return (returnDate - issueDate).days
 
@@ -279,19 +280,19 @@ class Library:
         return cost
 
     # report 4 "Completed"
-    def avgRentalHelper(self, bookID):
+    def avgRentalHelper(self):
         rentReturn = {}
+        harryPotterID = 3
         for operation in self.operations:
-            if bookID in self.operations[operation]['items'] and self.operations[operation][
-                'clientName'] not in rentReturn.keys() and self.operations[operation]['opType'] == 'rent':
+            if (harryPotterID in self.operations[operation]['items'] and self.operations[operation]['clientName']
+                    not in rentReturn.keys() and self.operations[operation]['opType'] == 'rent'):
                 rentReturn[self.operations[operation]['clientName']] = [self.operations[operation]['date'], 0]
-            elif self.operations[operation]['clientName'] in rentReturn.keys() and self.operations[operation][
-                'opType'] == 'return':
+            elif self.operations[operation]['clientName'] in rentReturn.keys() and self.operations[operation]['opType'] == 'return':
                 rentReturn[self.operations[operation]['clientName']][1] = self.operations[operation]['date']
         return rentReturn
 
-    def averageRentalPeriod(self, bookID):
-        rentReturn = self.avgRentalHelper(bookID)
+    def averageRentalPeriod(self):
+        rentReturn = self.avgRentalHelper()
         date_format = '%d.%m.%Y'
         sum = 0
         for date in rentReturn.values():
@@ -301,23 +302,7 @@ class Library:
         return sum / len(rentReturn.keys())
 
 
-'''
-This class is used to generate statistics
-from the library class 
-'''
-class Statistics:
-    def __init__(self, library):
-        self.report1 = None
-        self.report2 = None
-        self.report3 = None
-        self.report4 = None
-        self.library = library
 
-    def generateStatistics(self):
-        self.report1 = self.library.MaxRentedBooks()
-        self.report2 = self.library.librarianWithMaxOperations()
-        self.report3 = self.library.TotalRevenue()
-        self.report4 = self.library.averageRentalPeriod()
 
 
 
