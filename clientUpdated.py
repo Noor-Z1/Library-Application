@@ -9,23 +9,27 @@ class LoginScreen(Frame):
         self.serverMessage = None
         self.cSocket = cSocket
         self.master = master
-        
-        self.usernameLabel = Label(self, text='User Name ')
-        self.usernameLabel.grid(row=0, column=0)
+
+        # to make the frame expand
+        self.master.rowconfigure(0, weight=4)
+        self.master.columnconfigure(0, weight=4)
+
+        self.usernameLabel = Label(self, text='User name ', justify=CENTER)
+        self.usernameLabel.grid(row=0, column=0, padx=10, pady=10)
 
         self.username = StringVar()
-        self.usernameEntry = Entry(self, textvariable=self.username)
-        self.usernameEntry.grid(row=0, column=1)
+        self.usernameEntry = Entry(self, textvariable=self.username, justify=LEFT)
+        self.usernameEntry.grid(row=0, column=1, padx=10, pady=10)
 
         self.passLabel = Label(self, text='Password ')
-        self.passLabel.grid(row=1, column=0)
+        self.passLabel.grid(row=1, column=0, padx=10, pady=10)
 
         self.password = StringVar()
-        self.passEntry = Entry(self, textvariable=self.password, show='*')
-        self.passEntry.grid(row=1, column=1)
+        self.passEntry = Entry(self, textvariable=self.password, show='*', justify=LEFT)
+        self.passEntry.grid(row=1, column=1, padx=5, pady=5)
 
         self.loginButton = Button(self, text='Login', justify=CENTER, command=self.approvalMsg)
-        self.loginButton.grid(row=2, column=1)
+        self.loginButton.grid(row=2, column=1, padx=5, pady=5)
 
     def approvalMsg(self):
         username = self.usernameEntry.get()
@@ -36,7 +40,7 @@ class LoginScreen(Frame):
         login = 'login;' + username + ';' + password
         self.cSocket.send(login.encode())
         self.serverMessage = self.cSocket.recv(1024).decode()
-        
+
         if 'loginfailure' in self.serverMessage:
             messagebox.showerror('Login', 'Username/Password is incorrect!\n')
             self.master.destroy()
@@ -49,7 +53,6 @@ class LoginScreen(Frame):
                 self.master.showScreen('manager')
 
 
-# librarian screen completed
 class LibrarianScreen(Frame):
     def __init__(self, cSocket, master):
         Frame.__init__(self)
@@ -64,7 +67,7 @@ class LibrarianScreen(Frame):
         for i in range(0, 5):
             self.columnconfigure(i, weight=1)
 
-        self.bookLabel = Label(self, text="Books", justify=CENTER, font='Bold')
+        self.bookLabel = Label(self, text="Books", justify=CENTER, font='Bold', padx=5, pady=5)
         self.bookLabel.grid(columnspan=4, sticky=W + E + N + S)
 
         self.bookNames = [("A Tale of Two Cities by C.Dickens", BooleanVar()),
@@ -84,25 +87,25 @@ class LibrarianScreen(Frame):
             self.books.grid(row=rowindex, column=0, columnspan=4, sticky=W)
             rowindex += 1
 
-        self.dateLabel = Label(self, text="Date(dd.mm.yyyy):", justify=LEFT)
-        self.dateLabel.grid(row=rowindex + 1, column=0, columnspan=1, sticky=E)
+        self.dateLabel = Label(self, text="Date(dd.mm.yyyy):", justify=LEFT, padx=5, pady=5)
+        self.dateLabel.grid(row=rowindex + 1, column=0, columnspan=1, sticky=W)
 
-        self.dateEntry = Entry(self, justify=RIGHT)
-        self.dateEntry.grid(row=rowindex + 1, column=1, columnspan=1, sticky=NS, padx=5, pady=5)
+        self.dateEntry = Entry(self, justify=LEFT)
+        self.dateEntry.grid(row=rowindex + 1, column=1, columnspan=1, sticky=W, padx=5, pady=5)
 
-        self.clientLabel = Label(self, text="Client's name:", justify=LEFT)
-        self.clientLabel.grid(row=rowindex + 2, column=0, columnspan=1, sticky=E)
+        self.clientLabel = Label(self, text="Client's name:", justify=LEFT, padx=5, pady=5)
+        self.clientLabel.grid(row=rowindex + 2, column=0, columnspan=1, sticky=W, padx=5, pady=5)
 
-        self.clientEntry = Entry(self, justify=RIGHT)
-        self.clientEntry.grid(row=rowindex + 2, column=1, columnspan=1, sticky=NS, padx=5, pady=5)
+        self.clientEntry = Entry(self, justify=LEFT)
+        self.clientEntry.grid(row=rowindex + 2, column=1, columnspan=1, sticky=W, padx=5, pady=10)
 
-        self.rentButton = Button(self, text='Rent', command=self.rentOperation)
+        self.rentButton = Button(self, text='Rent', command=self.rentOperation, padx=5, pady=5)
         self.rentButton.grid(row=rowindex + 3, column=0, columnspan=1)
 
-        self.returnButton = Button(self, text='Return', command=self.returnOperation)
+        self.returnButton = Button(self, text='Return', command=self.returnOperation, padx=5, pady=5)
         self.returnButton.grid(row=rowindex + 3, column=1, columnspan=1)
 
-        self.closeButton = Button(self, text='Close', command=self.closeOperation)
+        self.closeButton = Button(self, text='Close', command=self.closeOperation, padx=5, pady=5)
         self.closeButton.grid(row=rowindex + 3, column=2, columnspan=1)
 
     def rentOperation(self):
@@ -169,7 +172,7 @@ class LibrarianScreen(Frame):
         self.cSocket.close()
         self.master.destroy()
 
-# Manager Completed
+
 class ManagerScreen(Frame):
     def __init__(self, cSocket, master):
         Frame.__init__(self)
@@ -193,16 +196,18 @@ class ManagerScreen(Frame):
         rowindex = 1
         for r in self.reports:
             self.report = Radiobutton(self, text=r, value=r, variable=self.reportVariable, height=2)
-            self.report.grid(row=rowindex, column=0, columnspan=4, sticky=W)
+            self.report.grid(row=rowindex, column=0, columnspan=4, sticky=W, padx=5, pady=5)
             rowindex += 1
 
         self.createButton = Button(self, text='Create', command=self.createReportOperation, width=30)
-        self.createButton.grid(row=rowindex + 1, column=0, columnspan=2, sticky=W)
+        self.createButton.grid(row=rowindex + 1, column=0, columnspan=2, sticky=W, padx=5, pady=5)
         self.createButton.columnconfigure(0, weight=4)
         self.createButton.rowconfigure(rowindex + 1, weight=4)
 
         self.closeButton = Button(self, text='Close', command=self.master.destroy, width=15)
-        self.closeButton.grid(row=rowindex + 1, column=2, columnspan=1, sticky=E)
+        self.closeButton.grid(row=rowindex + 1, column=2, columnspan=1, sticky=E, padx=5, pady=5)
+        self.closeButton.columnconfigure(2, weight=4)
+        self.closeButton.rowconfigure(rowindex + 1, weight=4)
 
     def createReportOperation(self):
         try:
@@ -232,7 +237,7 @@ class App(Tk):
         if screen == 'login':
             self.loginScreen = LoginScreen(self.cSocket, self)
             self.title('Login')
-            self.loginScreen.grid(padx=10, pady=10)
+            self.loginScreen.grid(padx=30, pady=30)
 
         elif screen == 'librarian':
             self.loginScreen.destroy()
