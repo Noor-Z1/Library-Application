@@ -73,15 +73,22 @@ class DataProcessor:
                 # the data we have is a string so we need to just write it directly
                 file.write(data)
 
+    '''
+    This method is used to write data to the
+    books.txt file
+    '''
+
     def writebooks(self, booksDict):
         # need to write the booksDict back to the books.txt
         with self.Rlock:
             with open(self.filepath, 'w') as file:
                 for bookID in booksDict:
                     file.write(str(bookID) + ";" + booksDict[bookID]['title'] + ";" + booksDict[bookID][
-                        'authorName'] + ";" + str(booksDict[bookID]['pricePerDay']) + ";" + str(booksDict[bookID]['copiesAvailable']) )
+                        'authorName'] + ";" + str(booksDict[bookID]['pricePerDay']) + ";" + str(
+                        booksDict[bookID]['copiesAvailable']))
                     if bookID != list(booksDict.keys())[-1]:
                         file.write("\n")
+
 
 '''
 This is the Library class, which will be used to
@@ -312,8 +319,13 @@ class Library:
 
     def averageRentalPeriod(self):
         rentReturn = self.avgRentalHelper()
+
+        if len(rentReturn) == 0:
+            return 0
+
         date_format = '%d.%m.%Y'
         sum = 0
+        valid_keys = 0
         for date in rentReturn.values():
             rentDate = datetime.strptime(date[0], date_format)
             if date[1] == 0:
@@ -321,15 +333,5 @@ class Library:
             else:
                 returnDate = datetime.strptime(date[1], date_format)
                 sum += (returnDate - rentDate).days
-        return sum / len(rentReturn.keys())
-
-
-
-
-# print(library.averageRentalPeriod())
-# print(library.librarianWithMaxOperations())
-# print(library.TotalRevenue())
-# print(library.MaxRentedBook())
-#
-# print(library.operations)
-# print(library.checkBookAvailability(1))
+                valid_keys += 1
+        return sum / valid_keys
