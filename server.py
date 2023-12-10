@@ -101,6 +101,8 @@ class ClientThread(Thread):
                 error = True
             elif returned_books.count(book) == rented_books.count(book):
                 error = True
+            elif self.library.rentedDaysCount(clientName,book,date) == -1:
+                error = True
         if error:
             self.cSocket.send("returnerror".encode())
 
