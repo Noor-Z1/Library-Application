@@ -1,4 +1,5 @@
 from datetime import *
+from threading import RLock
 
 '''
 This is the dataProcessor class, which will be used to 
@@ -10,11 +11,11 @@ of our Library Management System.
 class DataProcessor:
     def __init__(self, filepath):
         self.filepath = filepath
+        self.Rlock = RLock()
 
     def read(self):
         with open(self.filepath, 'r') as file:
             data = file.read()
-
             if self.filepath == "users.txt":
                 users = {}
                 for line in data.split('\n'):
@@ -59,7 +60,6 @@ class DataProcessor:
                                 operations[count]['items'].append(int(val))
                         count += 1
 
-                file.close()
                 return operations
 
     '''
@@ -68,23 +68,25 @@ class DataProcessor:
     '''
 
     def writeoperations(self, data):
-        with open(self.filepath, 'a') as file:
-            # the data we have is a string so we need to just write it directly
-            file.write(data)
-        file.close()
+        with self.Rlock:
+            with open(self.filepath, 'a') as file:
+                # the data we have is a string so we need to just write it directly
+                file.write(data)
 
     def writebooks(self, booksDict):
         # need to write the booksDict back to the books.txt
-        with open(self.filepath, 'w') as file:
-            for bookID in booksDict:
-                file.write(str(bookID) + ";" + booksDict[bookID]['title'] + ";" + booksDict[bookID]['authorName'] + ";" + str(
-                    booksDict[bookID]['pricePerDay']) + ";" + str(booksDict[bookID]['copiesAvailable']) + "\n")
-        file.close()
+        with self.Rlock:
+            with open(self.filepath, 'w') as file:
+                for bookID in booksDict:
+                    file.write(str(bookID) + ";" + booksDict[bookID]['title'] + ";" + booksDict[bookID][
+                        'authorName'] + ";" + str(booksDict[bookID]['pricePerDay']) + ";" + str(booksDict[bookID]['copiesAvailable']) )
+                    if bookID != list(booksDict.keys())[-1]:
+                        file.write("\n")
+
 '''
 This is the Library class, which will be used to
 to manage the data of the Library Management System
 and to perform operations on it
-
 '''
 
 
@@ -103,14 +105,14 @@ class Library:
         data_processor = DataProcessor("books.txt")
         self.books = data_processor.read()
 
-    def checkOperations(self):
+    def addOperations(self):
         data_processor = DataProcessor("operations.txt")
         self.operations = data_processor.read()
 
-    def addOperations(self, data):
+    def updateOperations(self, data):
         data_processor = DataProcessor("operations.txt")
         data_processor.writeoperations(data)
-        self.checkOperations()
+        self.addOperations()
 
     def updatebooks(self):
         data_processor = DataProcessor("books.txt")
@@ -189,14 +191,16 @@ class Library:
     def booksRented(self, clientName):
         books = []
         for operation in self.operations:
-            if (self.operations[operation]['clientName'] == clientName and self.operations[operation]['opType'] == 'rent'):
+            if (self.operations[operation]['clientName'] == clientName and self.operations[operation][
+                'opType'] == 'rent'):
                 books.extend(self.operations[operation]['items'])
         return books
 
     def booksReturned(self, clientName):
         books = []
         for operation in self.operations:
-            if (self.operations[operation]['clientName'] == clientName and self.operations[operation]['opType'] == 'return'):
+            if (self.operations[operation]['clientName'] == clientName and self.operations[operation][
+                'opType'] == 'return'):
                 books.extend(self.operations[operation]['items'])
         if len(books) == 0:
             return []
@@ -310,18 +314,13 @@ class Library:
         for date in rentReturn.values():
             rentDate = datetime.strptime(date[0], date_format)
             if date[1] == 0:
-                continue   # skip any rents without a return
+                continue  # skip any rents without a return
             else:
                 returnDate = datetime.strptime(date[1], date_format)
                 sum += (returnDate - rentDate).days
         return sum / len(rentReturn.keys())
 
 
-
-library = Library()
-library.addUsers()
-library.addBooks()
-library.checkOperations()
 
 
 # print(library.averageRentalPeriod())

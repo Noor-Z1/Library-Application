@@ -7,16 +7,18 @@ This class is used to handle client requests
 from the server
 """
 
-
 class ClientThread(Thread):
-    def __init__(self, clientAddress, clientsocket, library):
+    def __init__(self, clientAddress, clientsocket):
         Thread.__init__(self)
         self.cSocket = clientsocket
         self.address = clientAddress
-        self.library = library
+        self.library = Library()
         self.cSocket.send("connectionsuccess".encode())
 
     def run(self):
+        self.library.addUsers()
+        self.library.addBooks()
+        self.library.addOperations()
         while True:
             try:
                 clientMsg = self.cSocket.recv(1024).decode()
@@ -32,7 +34,6 @@ class ClientThread(Thread):
             except Exception as e:
                 print(e)
                 break
-
 
     def login(self, clientMsg):
         _, username, password = clientMsg.split(";")
@@ -64,7 +65,7 @@ class ClientThread(Thread):
         else:
             # check if user has returned all the books that s/he has rented previously
             if self.library.rentReturnValidation(clientName):
-                self.library.addOperations("\n" + clientMsg)
+                self.library.updateOperations("\n" + clientMsg)
                 for item in items:
                     self.library.books[item]['copiesAvailable'] -= 1
                 self.library.updatebooks()
@@ -102,9 +103,8 @@ class ClientThread(Thread):
             for book in items:
                 data_to_write += ";" + str(book)
                 self.library.books[book]['copiesAvailable'] += 1
-            self.library.addOperations(data_to_write)
+            self.library.updateOperations(data_to_write)
             self.cSocket.send(msg.encode())
-            # also need to update the copies left in books.txt ?
             self.library.updatebooks()
 
     def report(self, clientMsg):
@@ -132,11 +132,6 @@ class ClientThread(Thread):
 
 
 def main():
-    library = Library()
-    library.addUsers()
-    library.addBooks()
-    library.checkOperations()
-
     # let's have a client thread
     HOST = "127.0.0.1"
     PORT = 6000
@@ -148,7 +143,7 @@ def main():
     while True:
         mySocket.listen()
         cSocket, cAddress = mySocket.accept()
-        newClient = ClientThread(cAddress, cSocket, library)
+        newClient = ClientThread(cAddress, cSocket)
         newClient.start()
         # newClient.join()
 
