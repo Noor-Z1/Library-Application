@@ -225,13 +225,9 @@ class App(Tk):
     def __init__(self, cSocket):
         Tk.__init__(self)
         self.cSocket = cSocket
-
         # first need to check if connection established then we can show the screen
-        serverMsg = self.cSocket.recv(1024).decode()
-        if serverMsg == "connectionsuccess":
-            self.showScreen('login')
-        else:
-            messagebox.showerror('Error', 'Connection Error!')
+        self.showScreen('login')
+
 
     def showScreen(self, screen):
         if screen == 'login':
@@ -257,5 +253,12 @@ if __name__ == "__main__":
     PORT = 6000
     socket = socket(AF_INET, SOCK_STREAM)
     socket.connect((HOST, PORT))
-    window = App(socket)
-    window.mainloop()
+
+    # wait for connection
+    serverMsg = socket.recv(1024).decode()
+    print(serverMsg)
+    if 'connectionsuccess' in serverMsg:
+        app = App(socket)
+        app.mainloop()
+    else:
+        messagebox.showerror('Connection Error', serverMsg)

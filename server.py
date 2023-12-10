@@ -13,12 +13,11 @@ class ClientThread(Thread):
         self.cSocket = clientsocket
         self.address = clientAddress
         self.library = Library()
-        self.cSocket.send("connectionsuccess".encode())
+
 
     def run(self):
+        self.cSocket.send("connectionsuccess".encode())
         self.library.addUsers()
-        self.library.addBooks()
-        self.library.addOperations()
         while True:
             try:
                 clientMsg = self.cSocket.recv(1024).decode()
@@ -26,10 +25,16 @@ class ClientThread(Thread):
                 if 'login' in clientMsg:
                     self.login(clientMsg)
                 if 'rent' in clientMsg:
+                    self.library.addBooks()
+                    self.library.addOperations()
                     self.rent(clientMsg)
                 if 'return' in clientMsg:
+                    self.library.addBooks()
+                    self.library.addOperations()
                     self.returnBook(clientMsg)
                 if 'report' in clientMsg:
+                    self.library.addBooks()
+                    self.library.addOperations()
                     self.report(clientMsg)
             except Exception as e:
                 print(e)
