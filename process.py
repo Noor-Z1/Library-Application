@@ -20,7 +20,8 @@ class DataProcessor:
                 users = {}
                 for line in data.split('\n'):
                     if line != '':
-                        username, password, role = line.split(';')
+                        username, password, role = line.split(
+                            ';')  # create a users dictionary with username as key assumed to be unique
                         users[username] = {'password': password, 'role': role}
                 file.close()
                 return users
@@ -29,7 +30,8 @@ class DataProcessor:
                 books = {}
                 for line in data.split('\n'):
                     if line != '':
-                        bookID, title, authorName, pricePerDay, copiesAvailable = line.split(';')
+                        bookID, title, authorName, pricePerDay, copiesAvailable = line.split(
+                            ';')  # create a books dictionary with bookID as key assumed to be unique
                         books[int(bookID)] = {'title': title, 'authorName': authorName,
                                               'pricePerDay': float(pricePerDay),
                                               'copiesAvailable': int(copiesAvailable)}
@@ -44,6 +46,7 @@ class DataProcessor:
                     if line != '':
                         operation = line.split(';')
                         if operation[0] == 'rent':
+                            # create a dictionary with the key being the count of the operation
                             operations[count] = {'opType': operation[0], 'librarianName': operation[1],
                                                  'clientName': operation[2], 'date': operation[3], 'items': []}
                             # since items could be multiple
@@ -86,7 +89,8 @@ class DataProcessor:
                     file.write(str(bookID) + ";" + booksDict[bookID]['title'] + ";" + booksDict[bookID][
                         'authorName'] + ";" + str(booksDict[bookID]['pricePerDay']) + ";" + str(
                         booksDict[bookID]['copiesAvailable']))
-                    if bookID != list(booksDict.keys())[-1]:
+                    if bookID != list(booksDict.keys())[
+                        -1]:  # if not the last book in the dictionary we need to add a new line
                         file.write("\n")
 
 
@@ -164,9 +168,15 @@ class Library:
         else:
             return None
 
+    '''
+    This method is used to count the number of
+    books each client has rented and returned
+    :return: a dictionary containing the number
+    of books each client has rented and returned
+    '''
+
     def clientRentReturnCounter(self):
         clientOps = {}
-
         for operation in self.operations:
             if self.operations[operation]['clientName'] in clientOps:
                 name = self.operations[operation]['clientName']
@@ -182,6 +192,15 @@ class Library:
                     clientOps[self.operations[operation]['clientName']]['returnCount'] += len(
                         self.operations[operation]['items'])
         return clientOps
+
+    '''
+    This method is used to check if all the books
+    have been returned or not
+    It does so by checking if the number of books
+    that have been rented by the client is equal
+    to the number of books that have been returned
+    by the client
+    '''
 
     def rentReturnValidation(self, clientName):
         # has the client returned previously rented books?
@@ -214,6 +233,15 @@ class Library:
         else:
             return books
 
+    '''
+    This method is used to get the list of books
+    that the client has to return
+    We check that by checking the count for each book
+    in rented books and returned books
+    and then checking if the title of the book is in
+    the list of books that the client has to return
+    '''
+
     def getBookstoBeReturned(self, clientName):
         rented_books = self.booksRented(clientName)
         returned_books = self.booksReturned(clientName)
@@ -223,10 +251,18 @@ class Library:
                 toBeReturned.append(self.getBookTitle(book))
         return toBeReturned
 
+    '''
+    This method is used to calculate how many days
+    the book has been rented
+    We need to convert the dates to datetime format
+    to calculate the difference
+    We also return -1 if the return date is before
+    the latest rent date
+    '''
+
     def rentedDaysCount(self, clientName, book, returnDate):
         # need to convert the dates to datetime format to calculate days
         date_format = '%d.%m.%Y'
-
         returnDate2 = datetime.strptime(returnDate, date_format)
 
         for operation in self.operations:
@@ -239,7 +275,8 @@ class Library:
                     days = (returnDate2 - rentDate).days
                 else:
                     return -1
-        return days
+        return days  # this return outside is important because we want to return the different between the latest rent date and return
+        # date since the same book can be rented more than once
 
     def costCalculation(self, clientName, returnedBooks, returnDate):
         cost = 0
@@ -247,7 +284,12 @@ class Library:
             cost += self.getBookPrice(book) * self.rentedDaysCount(clientName, book, returnDate)
         return cost
 
-    # report 1 "Completed"
+
+    '''
+    This method is used to get the count of each book
+    that has been rented as in how many times was it
+    rented
+    '''
     def rentedBooksWithCount(self):
         rented = {}
         for operation in self.operations:
@@ -259,6 +301,11 @@ class Library:
                         rented[item] += 1
         return rented
 
+
+    '''
+    This method is used to get the title or titles of the books
+    that have been rented the most
+    '''
     def MaxRentedBook(self):
         allRented = self.rentedBooksWithCount()
         maxRented = 0
@@ -272,6 +319,11 @@ class Library:
                 maxBook.append(self.getBookTitle(book))
         return maxBook
 
+
+    '''
+    This is a helper to count the number of operations
+    of each librarian
+    '''
     def librarianOperationsCounter(self):
         librarianOps = {}
 
@@ -283,7 +335,11 @@ class Library:
 
         return librarianOps
 
-    # report 2
+
+    '''
+    This method is used to get the name of the librarians
+    that have done the most operations 
+    '''
     def librarianWithMaxOperations(self):
         allLibrarians = self.librarianOperationsCounter()
         maxOperations = 0
@@ -298,7 +354,11 @@ class Library:
 
         return maxLibrarian
 
-    # report 3 completed
+
+    '''
+    Total Revenue is calculated by adding the cost
+    of each return operation
+    '''
     def TotalRevenue(self):
         cost = 0
         for operation in self.operations:
@@ -306,7 +366,11 @@ class Library:
                 cost += self.operations[operation]['cost']
         return cost
 
-    # report 4 "Completed"
+
+    '''
+    This is a helper to calculate the average rental period
+    for the 'Harry Potter' book
+    '''
     def avgRentalHelper(self):
         rentReturn = {}
         harryPotterID = 3
@@ -321,10 +385,9 @@ class Library:
 
     def averageRentalPeriod(self):
         rentReturn = self.avgRentalHelper()
-
+        # validate if the book has been rented at all
         if len(rentReturn) == 0:
             return 0
-
         date_format = '%d.%m.%Y'
         sum = 0
         valid_keys = 0
@@ -336,4 +399,5 @@ class Library:
                 returnDate = datetime.strptime(date[1], date_format)
                 sum += (returnDate - rentDate).days
                 valid_keys += 1
+
         return sum / valid_keys
