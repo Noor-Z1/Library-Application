@@ -1,12 +1,13 @@
 from datetime import *
 
-
 '''
 This is the dataProcessor class, which will be used to 
 read and write data from the specific files 
 of our Library Management System.
 '''
-class dataProcessor:
+
+
+class DataProcessor:
     def __init__(self, filepath):
         self.filepath = filepath
 
@@ -66,20 +67,27 @@ class dataProcessor:
     operations.txt file
     '''
 
-    def write(self, data):
+    def writeoperations(self, data):
         with open(self.filepath, 'a') as file:
             # the data we have is a string so we need to just write it directly
-            file.write(data + '\n')
+            file.write(data)
         file.close()
 
-
-
+    def writebooks(self, booksDict):
+        # need to write the booksDict back to the books.txt
+        with open(self.filepath, 'w') as file:
+            for bookID in booksDict:
+                file.write(str(bookID) + ";" + booksDict[bookID]['title'] + ";" + booksDict[bookID]['authorName'] + ";" + str(
+                    booksDict[bookID]['pricePerDay']) + ";" + str(booksDict[bookID]['copiesAvailable']) + "\n")
+        file.close()
 '''
 This is the Library class, which will be used to
 to manage the data of the Library Management System
 and to perform operations on it
 
 '''
+
+
 class Library:
     def __init__(self):
         self.books = {}
@@ -88,21 +96,25 @@ class Library:
         self.statistics = {}
 
     def addUsers(self):
-        data_processor = dataProcessor("users.txt")
+        data_processor = DataProcessor("users.txt")
         self.users = data_processor.read()
 
     def addBooks(self):
-        data_processor = dataProcessor("books.txt")
+        data_processor = DataProcessor("books.txt")
         self.books = data_processor.read()
 
     def checkOperations(self):
-        data_processor = dataProcessor("operations.txt")
+        data_processor = DataProcessor("operations.txt")
         self.operations = data_processor.read()
 
     def addOperations(self, data):
-        data_processor = dataProcessor("operations.txt")
-        data_processor.write(data)
+        data_processor = DataProcessor("operations.txt")
+        data_processor.writeoperations(data)
         self.checkOperations()
+
+    def updatebooks(self):
+        data_processor = DataProcessor("books.txt")
+        data_processor.writebooks(self.books)
 
     def checkBookAvailability(self, bookID):
         if bookID in self.books:
@@ -165,37 +177,37 @@ class Library:
     def rentReturnValidation(self, clientName):
         # has the client returned previously rented books?
         clientOps = self.clientRentReturnCounter()
-        for clients in clientOps:
-            if clientOps['clientName'] == clientName:
-                if clientOps['returnCount'] == clients['rentCount']:
+        print(clientOps)
+        for client in clientOps:
+            if client == clientName:
+                if clientOps[client]['returnCount'] == clientOps[client]['rentCount']:
                     return True
                 else:
                     return False
+        return True
 
     def booksRented(self, clientName):
         books = []
         for operation in self.operations:
-            if (self.operations[operation]['clientName'] == clientName
-                    and self.operations[operation]['opType'] == 'rent'):
-                books.append(self.operations[operation]['items'])
-        return books[0]
+            if (self.operations[operation]['clientName'] == clientName and self.operations[operation]['opType'] == 'rent'):
+                books.extend(self.operations[operation]['items'])
+        return books
 
     def booksReturned(self, clientName):
         books = []
         for operation in self.operations:
-            if (self.operations[operation]['clientName'] == clientName
-                    and self.operations[operation]['opType'] == 'return'):
-                books.append(self.operations[operation]['items'])
+            if (self.operations[operation]['clientName'] == clientName and self.operations[operation]['opType'] == 'return'):
+                books.extend(self.operations[operation]['items'])
         if len(books) == 0:
             return []
         else:
-            return books[0]
+            return books
 
     def getBookstoBeReturned(self, clientName):
         rentedBooks = self.booksRented(clientName)
         returnedBooks = self.booksReturned(clientName)
         toBeReturned = []
-
+        print(rentedBooks)
         for book in rentedBooks:
             if book not in returnedBooks:
                 toBeReturned.append(self.getBookTitle(book))
@@ -241,14 +253,13 @@ class Library:
                 maxRented = allRented[book]
         for book in allRented:
             if allRented[book] == maxRented:
-                maxBook.append((f"book ID: {book}", f"Maximum rent: {maxRented}"))
+                maxBook.append(self.getBookTitle(book))
         return maxBook
 
     def librarianOperationsCounter(self):
         librarianOps = {}
 
         for operation in self.operations:
-
             if self.operations[operation]['librarianName'] in librarianOps:
                 librarianOps[self.operations[operation]['librarianName']] += 1
             else:
@@ -287,7 +298,8 @@ class Library:
             if (harryPotterID in self.operations[operation]['items'] and self.operations[operation]['clientName']
                     not in rentReturn.keys() and self.operations[operation]['opType'] == 'rent'):
                 rentReturn[self.operations[operation]['clientName']] = [self.operations[operation]['date'], 0]
-            elif self.operations[operation]['clientName'] in rentReturn.keys() and self.operations[operation]['opType'] == 'return':
+            elif self.operations[operation]['clientName'] in rentReturn.keys() and self.operations[operation][
+                'opType'] == 'return':
                 rentReturn[self.operations[operation]['clientName']][1] = self.operations[operation]['date']
         return rentReturn
 
@@ -297,16 +309,25 @@ class Library:
         sum = 0
         for date in rentReturn.values():
             rentDate = datetime.strptime(date[0], date_format)
-            returnDate = datetime.strptime(date[1], date_format)
+            if date[1] == 0:
+                returnDate = datetime.now()
+            else:
+                returnDate = datetime.strptime(date[1], date_format)
             sum += (returnDate - rentDate).days
         return sum / len(rentReturn.keys())
 
 
 
+library = Library()
+library.addUsers()
+library.addBooks()
+library.checkOperations()
 
 
-
-
-
-
-
+# print(library.averageRentalPeriod())
+# print(library.librarianWithMaxOperations())
+# print(library.TotalRevenue())
+# print(library.MaxRentedBook())
+#
+# print(library.operations)
+# print(library.checkBookAvailability(1))

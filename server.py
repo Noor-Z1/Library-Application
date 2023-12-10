@@ -7,118 +7,131 @@ This class is used to handle client requests
 from the server
 """
 
+
 class ClientThread(Thread):
     def __init__(self, clientAddress, clientsocket, library):
         Thread.__init__(self)
         self.cSocket = clientsocket
         self.address = clientAddress
         self.library = library
-        print("New connection added: ", clientAddress)
+        self.cSocket.send("connectionsuccess".encode())
 
     def run(self):
-        try:
-            clientMsg = self.cSocket.recv(1024).decode()
-            if 'login' in clientMsg:
-                self.login(clientMsg)
-            if 'rent' in clientMsg:
-                self.rent(clientMsg)
-            if 'return' in clientMsg:
-                self.returnBook(clientMsg)
-            if 'report' in clientMsg:
-                self.report(clientMsg)
-        except Exception as e:
-            print(e)
-        finally:
-            self.cSocket.close()
+        while True:
+            try:
+                clientMsg = self.cSocket.recv(1024).decode()
+                print(clientMsg)
+                if 'login' in clientMsg:
+                    self.login(clientMsg)
+                if 'rent' in clientMsg:
+                    self.rent(clientMsg)
+                if 'return' in clientMsg:
+                    self.returnBook(clientMsg)
+                if 'report' in clientMsg:
+                    self.report(clientMsg)
+            except Exception as e:
+                print(e)
+                break
+
+
     def login(self, clientMsg):
-        if "login" in clientMsg:
-            _, username, password = clientMsg.split(";")
-            role = self.library.checkUserRole(username)
-            if self.library.checkUserPassword(username, password):
-                msg = "loginsuccess" + ";" + username + ";" + role
-                self.cSocket.send(msg.encode())
+        _, username, password = clientMsg.split(";")
+        role = self.library.checkUserRole(username)
+        if self.library.checkUserPassword(username, password):
+            msg = "loginsuccess" + ";" + username + ";" + role
+            self.cSocket.send(msg.encode())
+        else:
+            print("loginfailure")
+            self.cSocket.send("loginfailure".encode())
+
+    def rent(self, clientMsg):
+        _, librarianName, clientName, date = clientMsg.split(";")[0:4]
+        items = clientMsg.split(";")[4:]
+
+        # check availability
+        available = True
+        message = "availabilityerror"
+        items = [int(i) for i in items]
+        for item in items:
+            if not self.library.checkBookAvailability(item):
+                message += ";" + self.library.getBookTitle(item) + ";" + self.library.getBookAuthor(item)
+                available = False
+
+        if not available:
+            print("here")
+            print(message)
+            self.cSocket.send(message.encode())
+        else:
+            # check if user has returned all the books that s/he has rented previously
+            if self.library.rentReturnValidation(clientName):
+                self.library.addOperations("\n" + clientMsg)
+                for item in items:
+                    self.library.books[item]['copiesAvailable'] -= 1
+                self.library.updatebooks()
+                self.cSocket.send("rentsuccess".encode())
             else:
-                print("loginfailure")
-                self.cSocket.send("loginfailure".encode())
-
-    def rent(self,clientMsg):
-        # clientMsg = self.cSocket.recv(1024).decode()
-        if "rent" in clientMsg:
-            _, librarianName, clientName, date = clientMsg.split(";")[0:4]
-            items = clientMsg.split(";")[4:]
-
-            # check availability
-            available = True
-            message = ''
-            for item in items:
-                if item in self.library.books:
-                    message = "availabilityerror"
-                    if self.library.books[item]['copiesAvailable'] == 0:
-                        message += ";" + self.library.getBookTitle(item) + ";" + self.library.getBookAuthor(item)
-                        available = False
-
-            if not available:
+                message = "renterror"
+                print(self.library.getBookstoBeReturned(clientName))
+                for books in self.library.getBookstoBeReturned(clientName):
+                    message += ";" + books
                 self.cSocket.send(message.encode())
-            else:
-                # check if user has returned all the books that s/he has rented previously
-                if self.library.rentReturnValidation(clientName):
-                    available2 = True
-                else:
-                    available2 = False
-                    message = "renterror"
-                    for books in self.library.getBookstoBeReturned(clientName):
-                        message += ";" + books
-                    self.cSocket.send(message.encode())
-                if available2:
-                    self.cSocket.send("rentsuccess".encode())
-                    self.library.addOperations(clientMsg)
 
     def returnBook(self, clientMsg):
-        # clientMsg = self.cSocket.recv(1024).decode()
-        if clientMsg[0:5] == "return":
-            _, librarianName, clientName, date = clientMsg.split(";")[0:4]
-            items = clientMsg.split(";")[4:]
+        _, librarianName, clientName, date = clientMsg.split(";")[0:4]
+        items = clientMsg.split(";")[4:]
 
-            returned_books = self.library.booksReturned(clientName)
-            rented_books = self.library.booksRented(clientName)
-            error = False
+        returned_books = self.library.booksReturned(clientName)
+        rented_books = self.library.booksRented(clientName)
+        error = False
 
+        # convert items list to int
+        items = [int(i) for i in items]
+        for book in items:
+            if book not in rented_books:
+                error = True
+                self.cSocket.send("returnerror".encode())
+            elif book in returned_books and book in rented_books:
+                error = True
+                self.cSocket.send("returnerror".encode())
+
+        if not error:
+            cost = self.library.costCalculation(clientName, items, date)
+            msg = "returnsuccess" + ";" + str(cost)
+            # need to alter the client message to include the cost before storing in operations.txt
+            data_to_write = "\n" + "return" + ";" + librarianName + ";" + clientName + ";" + date + ";" + str(cost)
             for book in items:
-                if book not in rented_books:
-                    error = True
-                    self.cSocket.send("returnerror".encode())
-                elif book in returned_books:
-                    error = True
-                    self.cSocket.send("returnerror".encode())
+                data_to_write += ";" + str(book)
+                self.library.books[book]['copiesAvailable'] += 1
+            self.library.addOperations(data_to_write)
+            self.cSocket.send(msg.encode())
+            # also need to update the copies left in books.txt ?
+            self.library.updatebooks()
 
-            if not error:
-                cost = self.library.costCalculation(clientName, items, date)
-                msg = "returnsuccess" + ";" + cost
-                # need to alter the client message to include the cost before storing in operations.txt
-                data_to_write = clientMsg[0:4] + ";" + cost + clientMsg[4:]
-                self.library.addOperations(data_to_write)
-                self.cSocket.send(msg.encode())
+    def report(self, clientMsg):
+        if "report1" in clientMsg:
+            maxRented = self.library.MaxRentedBook()
+            serverMsg = "report1"
+            for i in maxRented:
+                serverMsg += ";" + i
+            self.cSocket.send(serverMsg.encode())
+        elif "report2" in clientMsg:
+            librarians = self.library.librarianWithMaxOperations()
+            serverMsg = "report2"
+            for i in librarians:
+                serverMsg += ";" + i
+            print(serverMsg)
+            self.cSocket.send(serverMsg.encode())
+        elif "report3" in clientMsg:
+            Revenue = self.library.TotalRevenue()
+            serverMsg = "report3;" + str(Revenue)
+            self.cSocket.send(serverMsg.encode())
+        elif "report4" in clientMsg:
+            rental_period = self.library.averageRentalPeriod()
+            serverMsg = "report4;" + str(rental_period)
+            self.cSocket.send(serverMsg.encode())
 
-    # to be completed by Shemin
-    def report(self,clientMsg):
-        # clientMsg = self.cSocket.recv(1024).decode()
-        if clientMsg[0:5] == 'report':
-            serverMsg = ''
-            if "report1" in clientMsg:
-                serverMsg = f'The most rented book(s) overall is/are:\n {self.library.MaxRentedBook()}'
-                self.cSocket.send(serverMsg.encode())
-            elif "report2" in clientMsg:
-                serverMsg = self.library.librarianWithMaxOperations()
-                self.cSocket.send(serverMsg.encode())
-            elif "report3" in clientMsg:
-                serverMsg = self.library.TotalRevenue()
-                self.cSocket.send(serverMsg.encode())
-            elif "report4" in clientMsg:
-                serverMsg = self.library.averageRentalPeriod()
-                self.cSocket.send(serverMsg.encode())
 
 def main():
-    # testing library
     library = Library()
     library.addUsers()
     library.addBooks()
@@ -138,6 +151,7 @@ def main():
         newClient = ClientThread(cAddress, cSocket, library)
         newClient.start()
         # newClient.join()
+
 
 if __name__ == "__main__":
     main()
