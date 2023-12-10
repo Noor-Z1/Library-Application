@@ -36,6 +36,10 @@ class ClientThread(Thread):
                     self.library.addBooks()
                     self.library.addOperations()
                     self.report(clientMsg)
+                if 'close' in clientMsg:
+                    self.cSocket.close()
+                    print("Client at", self.address, "disconnected")
+                    break
             except Exception as e:
                 print(e)
                 break

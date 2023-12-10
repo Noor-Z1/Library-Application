@@ -204,7 +204,7 @@ class ManagerScreen(Frame):
         self.createButton.columnconfigure(0, weight=4)
         self.createButton.rowconfigure(rowindex + 1, weight=4)
 
-        self.closeButton = Button(self, text='Close', command=self.master.destroy, width=15)
+        self.closeButton = Button(self, text='Close', command=self.closeOperation, width=15)
         self.closeButton.grid(row=rowindex + 1, column=2, columnspan=1, sticky=E, padx=5, pady=5)
         self.closeButton.columnconfigure(2, weight=4)
         self.closeButton.rowconfigure(rowindex + 1, weight=4)
@@ -220,7 +220,11 @@ class ManagerScreen(Frame):
         except Exception as e:
             print(e)
 
-
+    def closeOperation(self):
+        clientMsg = "close"
+        self.cSocket.send(clientMsg.encode())
+        self.cSocket.close()
+        self.master.destroy()
 class App(Tk):
     def __init__(self, cSocket):
         Tk.__init__(self)
