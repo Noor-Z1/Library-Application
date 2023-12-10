@@ -46,10 +46,9 @@ class LoginScreen(Frame):
             self.master.destroy()
         elif 'loginsuccess' in self.serverMessage:
             if 'librarian' in self.serverMessage:
-                self.master.librarianName = username
+                self.master.librarianName = username # librarian name is needed to be send to server while rent and return operation in librarian screen
                 self.master.showScreen('librarian')
             elif 'manager' in self.serverMessage:
-                self.master.manager = username
                 self.master.showScreen('manager')
 
 
@@ -57,7 +56,7 @@ class LibrarianScreen(Frame):
     def __init__(self, cSocket, master):
         Frame.__init__(self)
         self.cSocket = cSocket
-        self.librarianName = self.master.librarianName
+        self.librarianName = self.master.librarianName # librarian name is needed to be send to server while rent and return operation
         self.master = master
         self.master.rowconfigure(1, weight=1)
         self.master.columnconfigure(0, weight=1)
@@ -82,7 +81,7 @@ class LibrarianScreen(Frame):
                           ("The Alchemist by P.Coelho", BooleanVar())]
         rowindex = 1
         for book in self.bookNames:
-            book[1].set(False)
+            book[1].set(False) #initially set the checkbutton to 'not selected'
             self.books = Checkbutton(self, text=book[0], variable=book[1], height=2)
             self.books.grid(row=rowindex, column=0, columnspan=4, sticky=W)
             rowindex += 1
@@ -111,29 +110,30 @@ class LibrarianScreen(Frame):
     def rentOperation(self):
         selectedBooks = []
         for i in range(10):
-            if self.bookNames[i][1].get():
+            if self.bookNames[i][1].get(): # get the name of the books that were selected on the librarian screen
                 selectedBooks.append(i + 1)
+                
         renterName = self.clientEntry.get()
         date = self.dateEntry.get()
-
+        # check if all the entries are filled in and at least one book is selected
         if renterName == '' or date == '' or len(selectedBooks) == 0:
             messagebox.showerror('Error', 'All fields are required!')
             return
-
+        # check the format of the date before sending it to the server
         if len(date) != 10 or date[2] != '.' or date[5] != '.':
             messagebox.showerror('Error', 'Date should be in the following format "dd.mm.yyyy"!Please write leading zeros as: 01.01.2000')
             return
-
-
+            
         clientMsg = f'rent;{self.librarianName};{renterName};{date};'
+        
         for i in selectedBooks:
-            clientMsg += f'{i}'
-            if i != selectedBooks[-1]:
+            clientMsg += f'{i}' # get the id of the books to be sent to server
+            if i != selectedBooks[-1]: # if last item is identified do not add a ';'
                 clientMsg += ';'
-        print(clientMsg)
+        
         self.cSocket.send(clientMsg.encode())
         serverMsg = self.cSocket.recv(1024).decode()
-        print(serverMsg)
+        
         serverMsg = serverMsg.split(';')
         if 'availabilityerror' in serverMsg:
             messagebox.showerror('Availability Error', serverMsg[1:])
@@ -146,16 +146,16 @@ class LibrarianScreen(Frame):
     def returnOperation(self):
         selectedBooks = []
         for i in range(10):
-            if self.bookNames[i][1].get():
+            if self.bookNames[i][1].get(): # get the name of the books that were selected on the librarian screen
                 selectedBooks.append(i + 1)
 
         renterName = self.clientEntry.get()
         date = self.dateEntry.get()
-
+        # check if all the entries are filled in and at least one book is selected
         if renterName == '' or date == '' or len(selectedBooks) == 0:
             messagebox.showerror('Error', 'All fields are required!')
             return
-
+        # check the format of the date before sending it to the server
         if len(date) != 10 or date[2] != '.' or date[5] != '.':
             messagebox.showerror('Error','Date should be in the following format "dd.mm.yyyy"!Please write leading zeros as: 01.01.2000')
             return
@@ -164,15 +164,16 @@ class LibrarianScreen(Frame):
         clientMsg = f'return;{self.librarianName};{renterName};{date};'
 
         for i in selectedBooks:
-            clientMsg += f'{i}'
-            if i != selectedBooks[-1]:
+            clientMsg += f'{i}' # get the id of the books to be sent to server
+            if i != selectedBooks[-1]: # if last item is identified do not add a ';'
                 clientMsg += ';'
 
         clientMsg = clientMsg.encode()
         self.cSocket.send(clientMsg)
+        
         serverMsg = self.cSocket.recv(1024).decode()
         serverMsg = serverMsg.split(';')
-        print(serverMsg)
+        
         if 'returnerror' in serverMsg:
             messagebox.showerror('Return Error', 'Please check the selected book(s) again or the date you entered!')
         elif 'availabilityerror' in serverMsg:
@@ -205,8 +206,8 @@ class ManagerScreen(Frame):
             "(3) What is the total generated revenue by the library?",
             "(4) What is the average rental period for the 'Harry Potter' book?"
         ]
-        self.reportVariable = StringVar()
-        self.reportVariable.set(self.reports[0])
+        self.reportVariable = StringVar() # needed to check only one can be selected at a time
+        self.reportVariable.set(self.reports[0]) # initially select only one of them
         rowindex = 1
         for r in self.reports:
             self.report = Radiobutton(self, text=r, value=r, variable=self.reportVariable, height=2)
@@ -224,27 +225,26 @@ class ManagerScreen(Frame):
         self.closeButton.rowconfigure(rowindex + 1, weight=4)
 
     def createReportOperation(self):
-        try:
-            reportNo = self.reportVariable.get()[1:2]
-            clientMsg = f'report{reportNo}'.encode()
-            self.cSocket.send(clientMsg)
-            serverMsg = self.cSocket.recv(1024).decode()
-            messagebox.showinfo(f'Report {reportNo}', serverMsg.split(';')[1:])
-        except Exception as e:
-            print(e)
+        reportNo = self.reportVariable.get()[1:2] # get the report number to do operation on server side
+        clientMsg = f'report{reportNo}'.encode()
+        self.cSocket.send(clientMsg)
+        serverMsg = self.cSocket.recv(1024).decode()
+        messagebox.showinfo(f'Report {reportNo}', serverMsg.split(';')[1:])
+        
 
     def closeOperation(self):
         clientMsg = "close"
         self.cSocket.send(clientMsg.encode())
         self.cSocket.close()
         self.master.destroy()
+# The App class is used to handle the screen switches
 class App(Tk):
     def __init__(self, cSocket):
         Tk.__init__(self)
         self.cSocket = cSocket
-        # first need to check if connection established then we can show the screen
-        self.showScreen('login')
 
+        #initially the login screen is displayed
+        self.showScreen('login')
 
     def showScreen(self, screen):
         if screen == 'login':
