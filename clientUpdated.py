@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
 from socket import *
-
+from datetime import *
 
 class LoginScreen(Frame):
     def __init__(self, cSocket, master):
@@ -115,9 +115,11 @@ class LibrarianScreen(Frame):
                 selectedBooks.append(i + 1)
         renterName = self.clientEntry.get()
         date = self.dateEntry.get()
+
         if len(date) != 10 or date[2] != '.' or date[5] != '.':
             messagebox.showerror('Error', 'Date should be in the following format "dd.mm.yyyy"!Please write leading zeros as: 01.01.2000')
             return
+
         if renterName == '' or date == '' or len(selectedBooks) == 0:
             messagebox.showerror('Error', 'All fields are required!')
             return
@@ -146,6 +148,11 @@ class LibrarianScreen(Frame):
 
         renterName = self.clientEntry.get()
         date = self.dateEntry.get()
+
+        if len(date) != 10 or date[2] != '.' or date[5] != '.':
+            messagebox.showerror('Error','Date should be in the following format "dd.mm.yyyy"!Please write leading zeros as: 01.01.2000')
+            return
+
         if renterName == '' or date == '' or len(selectedBooks) == 0:
             messagebox.showerror('Error', 'All fields are required!')
             return
@@ -167,7 +174,6 @@ class LibrarianScreen(Frame):
             messagebox.showerror('Availability Error', serverMsg)
         else:
             messagebox.showinfo('Return Detail', serverMsg)
-            self.master.destroy()
 
     def closeOperation(self):
         clientMsg = "close"
@@ -219,7 +225,6 @@ class ManagerScreen(Frame):
             self.cSocket.send(clientMsg)
             serverMsg = self.cSocket.recv(1024).decode()
             messagebox.showinfo(f'Report {reportNo}', serverMsg.split(';')[1:])
-            self.master.destroy()
         except Exception as e:
             print(e)
 
