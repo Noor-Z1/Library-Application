@@ -1,8 +1,8 @@
 1;A Tale of Two Cities;C.Dickens;2.0;1
-2;The Little Prince;A.Exupery;2.5;2
-3;Harry Potter;J.K.Rowling;2.0;5
+2;The Little Prince;A.Exupery;2.5;1
+3;Harry Potter;J.K.Rowling;2.0;10
 4;And Then The Were None;A.Christie;2.0;2
-5;Dream of the Red Chamber;C.Xueqin;1.5;1
+5;Dream of the Red Chamber;C.Xueqin;1.5;0
 6; The Hobbit;J.Tolkien;3.0;4
 7; She: A History of Adventure;H.Haggard;2.5;2
 8; Vardi Wala Gunda;V.Sharma;2.0;2

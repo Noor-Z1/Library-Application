@@ -116,13 +116,15 @@ class LibrarianScreen(Frame):
         renterName = self.clientEntry.get()
         date = self.dateEntry.get()
 
+        if renterName == '' or date == '' or len(selectedBooks) == 0:
+            messagebox.showerror('Error', 'All fields are required!')
+            return
+
         if len(date) != 10 or date[2] != '.' or date[5] != '.':
             messagebox.showerror('Error', 'Date should be in the following format "dd.mm.yyyy"!Please write leading zeros as: 01.01.2000')
             return
 
-        if renterName == '' or date == '' or len(selectedBooks) == 0:
-            messagebox.showerror('Error', 'All fields are required!')
-            return
+
         clientMsg = f'rent;{self.librarianName};{renterName};{date};'
         for i in selectedBooks:
             clientMsg += f'{i}'
@@ -136,7 +138,8 @@ class LibrarianScreen(Frame):
         if 'availabilityerror' in serverMsg:
             messagebox.showerror('Availability Error', serverMsg[1:])
         elif 'renterror' in serverMsg:
-            messagebox.showerror('Rent Error', f'The following books should be returned first: {serverMsg[1:]}')
+            msg = f'The following books should be returned first: {serverMsg[1:]}'
+            messagebox.showerror('Rent Error', msg)
         elif 'rentsuccess' in serverMsg:
             messagebox.showinfo('Rent Detail', 'Rent operation has been done successfully!')
 
@@ -149,13 +152,15 @@ class LibrarianScreen(Frame):
         renterName = self.clientEntry.get()
         date = self.dateEntry.get()
 
+        if renterName == '' or date == '' or len(selectedBooks) == 0:
+            messagebox.showerror('Error', 'All fields are required!')
+            return
+
         if len(date) != 10 or date[2] != '.' or date[5] != '.':
             messagebox.showerror('Error','Date should be in the following format "dd.mm.yyyy"!Please write leading zeros as: 01.01.2000')
             return
 
-        if renterName == '' or date == '' or len(selectedBooks) == 0:
-            messagebox.showerror('Error', 'All fields are required!')
-            return
+
         clientMsg = f'return;{self.librarianName};{renterName};{date};'
 
         for i in selectedBooks:
@@ -169,7 +174,7 @@ class LibrarianScreen(Frame):
         serverMsg = serverMsg.split(';')
         print(serverMsg)
         if 'returnerror' in serverMsg:
-            messagebox.showerror('Return Error', 'Please check the selected book(s) again!')
+            messagebox.showerror('Return Error', 'Please check the selected book(s) again or the date you entered!')
         elif 'availabilityerror' in serverMsg:
             messagebox.showerror('Availability Error', serverMsg)
         else:
