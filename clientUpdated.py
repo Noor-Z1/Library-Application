@@ -44,6 +44,8 @@ class LoginScreen(Frame):
         if 'loginfailure' in self.serverMessage:
             messagebox.showerror('Login', 'Username/Password is incorrect!\n')
             self.master.destroy()
+            self.cSocket.send('close'.encode())   # close the connection and making sure server will not wait for any more messages
+            self.cSocket.close()
         elif 'loginsuccess' in self.serverMessage:
             if 'librarian' in self.serverMessage:
                 self.master.librarianName = username # librarian name is needed to be send to server while rent and return operation in librarian screen

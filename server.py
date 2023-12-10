@@ -56,7 +56,6 @@ class ClientThread(Thread):
             msg = "loginsuccess" + ";" + username + ";" + role
             self.cSocket.send(msg.encode())
         else:
-            print("loginfailure")
             self.cSocket.send("loginfailure".encode())
 
     def rent(self, clientMsg):
