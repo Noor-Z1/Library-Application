@@ -99,7 +99,7 @@ class ClientThread(Thread):
         for book in items:
             if book not in rented_books:
                 error = True
-            elif book in returned_books and book in rented_books:
+            elif returned_books.count(book) == rented_books.count(book):
                 error = True
         if error:
             self.cSocket.send("returnerror".encode())
