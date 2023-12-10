@@ -99,10 +99,10 @@ class ClientThread(Thread):
         for book in items:
             if book not in rented_books:
                 error = True
-                self.cSocket.send("returnerror".encode())
             elif book in returned_books and book in rented_books:
                 error = True
-                self.cSocket.send("returnerror".encode())
+        if error:
+            self.cSocket.send("returnerror".encode())
 
         if not error:
             cost = self.library.costCalculation(clientName, items, date)
