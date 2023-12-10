@@ -115,6 +115,9 @@ class LibrarianScreen(Frame):
                 selectedBooks.append(i + 1)
         renterName = self.clientEntry.get()
         date = self.dateEntry.get()
+        if len(date) != 10 or date[2] != '.' or date[5] != '.':
+            messagebox.showerror('Error', 'Date should be in the following format "dd.mm.yyyy"!Please write leading zeros as: 01.01.2000')
+            return
         if renterName == '' or date == '' or len(selectedBooks) == 0:
             messagebox.showerror('Error', 'All fields are required!')
             return
