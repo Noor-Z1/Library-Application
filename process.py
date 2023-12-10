@@ -226,8 +226,11 @@ class Library:
             if (self.operations[operation]['clientName'] == clientName
                     and self.operations[operation]['opType'] == 'rent'
                     and book in self.operations[operation]['items']):
-                issueDate = datetime.strptime(self.operations[operation]['date'], date_format)
-                return (returnDate - issueDate).days
+                if self.operations[operation]['date'] <= returnDate:
+                    issueDate = datetime.strptime(self.operations[operation]['date'], date_format)
+                    return (returnDate - issueDate).days
+                else:
+                    return -1
 
     def costCalculation(self, clientName, returnedBooks, returnDate):
         cost = 0
