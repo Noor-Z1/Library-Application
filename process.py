@@ -310,10 +310,10 @@ class Library:
         for date in rentReturn.values():
             rentDate = datetime.strptime(date[0], date_format)
             if date[1] == 0:
-                returnDate = datetime.now()
+                continue   # skip any rents without a return
             else:
                 returnDate = datetime.strptime(date[1], date_format)
-            sum += (returnDate - rentDate).days
+                sum += (returnDate - rentDate).days
         return sum / len(rentReturn.keys())
 
 
