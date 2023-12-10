@@ -220,7 +220,7 @@ class Library:
     def rentedDaysCount(self, clientName, book, returnDate):
         # need to convert the dates to datetime format to calculate days
         date_format = '%d.%m.%Y'
-        returnDate = datetime.strptime(returnDate, date_format)
+        returnDate2 = datetime.strptime(returnDate, date_format)
 
         for operation in self.operations:
             if (self.operations[operation]['clientName'] == clientName
@@ -228,7 +228,7 @@ class Library:
                     and book in self.operations[operation]['items']):
                 if self.operations[operation]['date'] <= returnDate:
                     issueDate = datetime.strptime(self.operations[operation]['date'], date_format)
-                    return (returnDate - issueDate).days
+                    return (returnDate2 - issueDate).days
                 else:
                     return -1
 
